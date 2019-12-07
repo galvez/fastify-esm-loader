@@ -37,6 +37,8 @@ fastify.register(FastifyESMLoader, {
 })
 ```
 
+You can also use `injections` to make available things like `db` and `redis`.
+
 Check `examples/index.js` and `examples/main.js` for the full boilerplate.
 
 `fastify-esm-loader` will peek into `baseDir` and pick up the following.
@@ -101,6 +103,20 @@ export default ({ env }) => {
 ```js
 export default async function (request, reply) {
   reply.send({ message: 'No injections needed here' })
+}
+```
+
+## Environment shorthand
+
+`NODE_ENV` is used to populate `env.$node_env` (lowercase, prefixed with `$`).
+
+This allows for checks such as this:
+
+```js
+export default ({ env, fastify, self }) => {
+  if (env.$staging) {
+    fastify.get('/staging-only', self.stagingOnly)
+  }
 }
 ```
 
