@@ -1,3 +1,4 @@
+import { join } from 'path'
 import Fastify from 'fastify'
 // Import directly from source here:
 import FastifyESMLoader from '../index'
@@ -12,7 +13,14 @@ const fastify = Fastify({
   },
 })
 
-fastify.register(FastifyESMLoader)
+fastify.register(FastifyESMLoader, {
+  baseDir: join(__dirname, 'routes'),
+  inject: {
+    someRootHelper () {
+      return 'foobar'
+    }
+  }
+})
 
 async function listen () {
   try {

@@ -4,7 +4,3 @@ export default ({ env, fastify, self }) => {
     fastify.get('/staging-only', self.stagingOnly)
   }
 }
-
-export function someRootHelper () {
-  return 'foobar'
-}
