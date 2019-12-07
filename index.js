@@ -2,7 +2,7 @@ import { parse, join } from 'path'
 import klaw from 'klaw'
 export { access, readFile, copyFile, ensureDir } from 'fs-extra'
 
-function createFileExtensionFilter (filter) {
+function createFileExtensionFilter(filter) {
   return (path) => {
     let ext
     // eslint-disable-next-line no-cond-assign
@@ -14,7 +14,7 @@ function createFileExtensionFilter (filter) {
 }
 
 // Copied from @nuxt/blueprints as-is
-export function walk (dir, { validateExtension, sliceRoot = true } = {}) {
+export function walk(dir, { validateExtension, sliceRoot = true } = {}) {
   const matches = []
 
   let sliceAt
@@ -40,32 +40,35 @@ export function walk (dir, { validateExtension, sliceRoot = true } = {}) {
   })
 }
 
-function baseImport (baseDir, path, parent = null) {
+function baseImport(baseDir, path, parent = null) {
   return import(parent ? join(baseDir, parent, path) : join(baseDir, path))
-    .catch(() => console.error(`Error importing ${path}`))
+    .catch(() => {
+      throw new Error(`Error importing ${path}`)
+    })
 }
 
-function defaultImport (baseDir, path, parent = null) {
+function defaultImport(baseDir, path, parent = null) {
   return import(parent ? join(baseDir, parent, path) : join(baseDir, path))
     .then(m => m.default)
-    .catch(() => console.error(`Error importing ${path}`))
+    .catch(() => {
+      throw new Error(`Error importing ${path}`)
+    })
 }
 
-async function loadRoutes (
+async function loadRoutes(
   baseDir,
   matches,
   injections = {},
   parent = undefined,
   result = {},
-  routeLoaders = [],
+  routeLoaders = []
 ) {
-  let m
   for (const match of matches) {
     if (match.match(/^[^/.]+$/)) {
       const index = matches.find(_ => _.match(`^${match}/index.js`))
       result[match] = {
         ...index && {
-          index: () => baseImport(baseDir, join(match, 'index.js')),
+          index: () => baseImport(baseDir, join(match, 'index.js'))
         },
         ...matches
           .filter(_ => _.match(`^${match}/[^/]+\\.js$`))
@@ -81,7 +84,7 @@ async function loadRoutes (
                 })
             }
             return methods
-          }, {}),
+          }, {})
       }
       const routeIndex = await result[match].index()
       const routeInjections = {
@@ -89,7 +92,7 @@ async function loadRoutes (
         ...routeIndex,
         env: process.env,
         ...process.env.NODE_ENV && {
-          [`$${env[process.env.NODE_ENV.toLowerCase()]}`]: true
+          [`$${process.env[process.env.NODE_ENV.toLowerCase()]}`]: true
         }
       }
 
@@ -100,7 +103,7 @@ async function loadRoutes (
               ...routeInjections,
               fastify,
               self: new Proxy(result[match], {
-                get (_, prop) {
+                get(_, prop) {
                   if (prop in result[match]) {
                     if (result[match][prop].length === 1) {
                       return result[match][prop](routeInjections)
@@ -109,8 +112,8 @@ async function loadRoutes (
                   } else {
                     fastify.log.error(`${prop} is missing in ${match} namespace.`)
                   }
-                },
-              }),
+                }
+              })
             })
           })
         } else {
@@ -134,7 +137,7 @@ async function loadRoutes (
                 })
             }
             return methods
-          }, {}),
+          }, {})
       }
       const routeIndex = await indexRoutes.index()
       const routeInjections = {
@@ -142,7 +145,7 @@ async function loadRoutes (
         ...routeIndex,
         env: process.env,
         ...process.env.NODE_ENV && {
-          [`$${env[process.env.NODE_ENV.toLowerCase()]}`]: true
+          [`$${process.env[process.env.NODE_ENV.toLowerCase()]}`]: true
         }
       }
 
@@ -153,7 +156,7 @@ async function loadRoutes (
               ...routeInjections,
               fastify,
               self: new Proxy(indexRoutes, {
-                get (_, prop) {
+                get(_, prop) {
                   if (prop in indexRoutes) {
                     if (indexRoutes[prop].length === 1) {
                       return indexRoutes[prop](routeInjections)
@@ -162,8 +165,8 @@ async function loadRoutes (
                   } else {
                     fastify.log.error(`${prop} is missing in index namespace.`)
                   }
-                },
-              }),
+                }
+              })
             })
           })
         } else {
@@ -185,8 +188,8 @@ async function loadRoutes (
               .map(_ => _.slice(childMatch[1].length + 1))
               .filter(Boolean),
             injections,
-            childMatch[1],
-          ),
+            childMatch[1]
+          )
         )
       }
     }
@@ -199,7 +202,7 @@ export default async (fastify, options = {}, next) => {
     throw new Error('baseDir missing')
   }
   const matches = await walk(options.baseDir, {
-    validateExtension: /\.js$/,
+    validateExtension: /\.js$/
   })
   const routeLoaders = await loadRoutes(
     options.baseDir,

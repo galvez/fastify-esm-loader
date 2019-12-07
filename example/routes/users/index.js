@@ -5,6 +5,6 @@ export default ({ fastify, self }) => {
   fastify.post('/users', self.createUser)
 }
 
-export function someRegistrationHelper () {
+export function someRegistrationHelper() {
   return 'foobar'
 }
