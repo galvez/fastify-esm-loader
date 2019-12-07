@@ -12,6 +12,14 @@ npm i fastify-esm-loader --save
 - Introduces handy **idioms and helpers for dependency injection**
 - Forces a **clean, well organized style** for route handler definitions
 
+## Example
+
+```sh
+npm i
+cd example/
+node index.js
+```
+
 ## Usage
 
 ```js
