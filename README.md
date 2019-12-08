@@ -8,7 +8,7 @@ npm i fastify-esm-loader --save
 
 ## Features
 
-- Automatically **discovers and registers route definitions**
+- Automatically **discovers route handlers** from file system
 - Introduces handy **idioms and helpers for dependency injection**
 - Forces a **clean, well organized style** for route handler definitions
 
