@@ -49,8 +49,8 @@ You can also use `injections` to make available things like `db` and `redis`.
 
 Check `examples/index.js` and `examples/main.js` for the full boilerplate.
 
-Assuming `baseDir` is `routes`, `fastify-esm-loader` will look for `index.js`
-files underneath and use them to recursively register routes. 
+Assuming `baseDir` is `routes`, `fastify-esm-loader` will recursively look for 
+`index.js` files use them to register routes, at **any depth**.
 
 For example:
 
