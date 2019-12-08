@@ -76,7 +76,9 @@ handler. The loader will make them available in `self` in the main route
 definition function (`routes/index.js`), so that you can easily tweak the mapping.
 
 The mechanics described above will work for both **top-level files and 
-subfolders**, i.e., the following setup work would the same:
+subfolders**.
+
+That means the following setup work would the same:
 
 ```
 project/routes/index.js
