@@ -16,13 +16,13 @@ const fastify = Fastify({
 fastify.register(FastifyESMLoader, {
   baseDir: join(__dirname, 'routes'),
   injections: {
-    someRootHelper() {
+    someRootHelper () {
       return 'foobar'
     }
   }
 })
 
-async function listen() {
+async function listen () {
   try {
     await fastify.listen(5000)
     fastify.log.info(`Listening on ${fastify.server.address().port}`)

@@ -1,6 +1,6 @@
 
 export default ({ env, fastify, self }) => {
-  if (env.NODE_ENV === 'staging') {
+  if (env.$staging) {
     fastify.get('/staging-only', self.stagingOnly)
   }
 }
