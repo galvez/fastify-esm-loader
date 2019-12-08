@@ -73,7 +73,7 @@ project/routes/users/createUser.js
 
 And each of these files, export a default function that is then used as a route
 handler. The loader will make them available in `self` in the main route 
-definition function (`routes/index.js`), so that you can easily tweak the mapping.
+definition function (`users/index.js`), so that you can easily tweak the mapping.
 
 The mechanics described above will work for both **top-level files and 
 subfolders**.
