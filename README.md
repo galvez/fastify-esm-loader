@@ -49,9 +49,8 @@ You can also use `injections` to make available things like `db` and `redis`.
 
 Check `examples/index.js` and `examples/main.js` for the full boilerplate.
 
-`fastify-esm-loader` will peek into `baseDir` and pick up the following.
-
-> Assuming `baseDir` is `resolve(__dirname, 'routes')`.
+Assuming `baseDir` is `resolve(__dirname, 'routes')`, `fastify-esm-loader` will 
+peek into `baseDir` and pick up files as follows:
 
 **project/routes/users/index.js**: exports from this file are made available in 
 route definition functions (more on this below) in the `this` context. I refer
