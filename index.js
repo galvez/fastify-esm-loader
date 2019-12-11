@@ -26,19 +26,9 @@ export function walk (dir, { sliceRoot = true } = {}) {
   })
 }
 
-function baseImport (path) {
-  return import(path)
-    .catch(() => {
-      throw new Error(`Error importing ${path}`)
-    })
-}
-
 function defaultImport (path) {
   return import(path)
     .then(m => m.default)
-    .catch(() => {
-      throw new Error(`Error importing ${path}`)
-    })
 }
 
 async function loadRoutes (
@@ -53,7 +43,7 @@ async function loadRoutes (
       dir = `./${dir}`
     }
     const routes = {
-      index: () => baseImport(join(baseDir, match)),
+      index: () => import(join(baseDir, match)),
       ...readdirSync(join(baseDir, dir))
         .filter(_ => _.endsWith('.js'))
         .filter(_ => !_.endsWith('index.js'))
