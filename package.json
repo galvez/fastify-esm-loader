@@ -1,6 +1,6 @@
 {
   "name": "fastify-esm-loader",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "An esm-based loader for your Fastify applications.",
   "license": "MIT",
   "publishConfig": {
