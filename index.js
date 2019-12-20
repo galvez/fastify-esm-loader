@@ -2,6 +2,8 @@ import { readdirSync } from 'fs'
 import { parse, join } from 'path'
 import klaw from 'klaw'
 
+export const methodPathSymbol = Symbol.for('method-path')
+
 export function walk (dir, { sliceRoot = true } = {}) {
   const matches = []
 
@@ -48,12 +50,14 @@ async function loadRoutes (
         .filter(_ => _.endsWith('.js'))
         .filter(_ => !_.endsWith('index.js'))
         .reduce((methods, method) => {
-          methods[parse(method).name] = () => {
+          const methodName = parse(method).name
+          methods[methodName] = () => {
             return defaultImport(`${baseDir}/${join(dir, method)}`)
               .then((method) => {
                 if (typeof method !== 'function') {
                   return null
                 }
+                method[methodPathSymbol] = `${dir.replace(/\//g, '.').replace(/^\.+/g, '')}.${methodName}`
                 return method
               })
           }
