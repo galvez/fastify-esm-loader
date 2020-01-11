@@ -57,7 +57,7 @@ async function loadRoutes (
                 if (typeof method !== 'function') {
                   return null
                 }
-                method[methodPathSymbol] = `${dir.replace(/\//g, '.').replace(/^\.+/g, '')}.${methodName}`
+                method[methodPathSymbol] = `${dir.replace(/[/\\]/g, '.').replace(/^\.+/g, '')}.${methodName}`
                 return method
               })
           }
