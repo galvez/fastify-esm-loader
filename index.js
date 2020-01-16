@@ -44,6 +44,7 @@ async function loadRoutes (
     if (dir) {
       dir = `./${dir}`
     }
+    const dirPath = dir.replace(/[/\\]/g, '.').replace(/^\.+/g, '')
     const routes = {
       index: () => import(join(baseDir, match)),
       ...readdirSync(join(baseDir, dir))
@@ -57,7 +58,7 @@ async function loadRoutes (
                 if (typeof method !== 'function') {
                   return null
                 }
-                method[methodPathSymbol] = `${dir.replace(/[/\\]/g, '.').replace(/^\.+/g, '')}.${methodName}`
+                method[methodPathSymbol] = `${dirPath}.${methodName}`
                 return method
               })
           }
@@ -82,11 +83,22 @@ async function loadRoutes (
           return routeIndex.default({
             ...routeInjections,
             fastify,
+            bind (method, name) {
+              if (!method.name) {
+                method.name = name
+              }
+              if (method.name) {
+                method[methodPathSymbol] = `${dirPath}.${method.name}`
+              }
+              return method
+            },
             self: new Proxy(routes, {
               get (_, prop) {
                 if (prop in routes) {
                   if (routes[prop].length === 1) {
-                    return routes[prop](routeInjections)
+                    const dynMethod = routes[prop](routeInjections)
+                    dynMethod[methodPathSymbol] = routes[prop][methodPathSymbol]
+                    return dynMethod
                   }
                   return routes[prop]
                 } else {
