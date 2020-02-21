@@ -1,4 +1,4 @@
-import { readdirSync } from 'fs'
+import { readdirSync, existsSync } from 'fs'
 import { parse, join } from 'path'
 import klaw from 'klaw'
 
@@ -46,7 +46,9 @@ async function loadRoutes (
     }
     const dirPath = dir.replace(/[/\\]/g, '.').replace(/^\.+/g, '')
     const routes = {
-      index: () => import(join(baseDir, match)),
+      index: existsSync(join(baseDir, match))
+        ? () => import(join(baseDir, match)).catch(() => {})
+        : () => ({}),
       ...readdirSync(join(baseDir, dir))
         .filter(_ => _.endsWith('.js'))
         .filter(_ => !_.endsWith('index.js'))
@@ -79,6 +81,9 @@ async function loadRoutes (
 
     for (const [method, methodLoader] of Object.entries(routes)) {
       if (method === 'index') {
+        if (!routeIndex.default || typeof routeIndex.default !== 'function') {
+          continue
+        }
         routeLoaders.push((fastify) => {
           return routeIndex.default({
             ...routeInjections,
