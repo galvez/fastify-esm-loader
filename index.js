@@ -33,10 +33,80 @@ function defaultImport (path) {
     .then(m => m.default)
 }
 
+function getFastifyFacade (fastify, { hooks }) {
+  const httpMethods = {
+    get: (...args) => {
+      const [url, handler] = args
+      fastify.route({
+        method: 'GET',
+        url,
+        handler,
+        ...hooks,
+      })
+    },
+    post: (...args) => {
+      const [url, handler] = args
+      fastify.route({
+        method: 'POST',
+        url,
+        handler,
+        ...hooks,
+      })      
+    },
+    put: (...args) => {
+      const [url, handler] = args
+      fastify.route({
+        method: 'PUT',
+        url,
+        handler,
+        ...hooks,
+      })
+    },
+    delete: (...args) => {
+      const [url, handler] = args
+      fastify.route({
+        method: 'DELETE',
+        url,
+        handler,
+        ...hooks,
+      })
+    },
+  }
+  return new Proxy({
+    ...httpMethods,
+    route: (options) => {
+      for (const [hook, list] of Object.entries(hooks)) {
+        if (options[hook]) {
+          if (!Array.isArray(list)) {
+            list = [list]
+          }
+          if (!Array.isArray(options[hook])) {
+            options[hook] = [options[hook], ...list]
+          } else {
+            options[hook].push(...list)
+          }
+        } else {
+          options[hook] = list
+        }
+      }
+      fastify.route(options)
+    },
+  },
+  {
+    get (facade, prop) {
+      if (prop in facade) {
+        return facade[prop]
+      } else {
+        return fastify[prop]
+      }
+    }
+  })
+}
+
 async function loadRoutes (
   baseDir,
   matches,
-  injections = {}
+  injections = {},
 ) {
   const routeLoaders = []
   for (const match of matches) {
@@ -84,10 +154,10 @@ async function loadRoutes (
         if (!routeIndex.default || typeof routeIndex.default !== 'function') {
           continue
         }
-        routeLoaders.push((fastify) => {
+        routeLoaders.push((fastify, hooks) => {
           return routeIndex.default({
             ...routeInjections,
-            fastify,
+            fastify: getFastifyFacade(fastify, hooks),
             bind (method, name) {
               if (!method.name) {
                 method.name = name
@@ -131,8 +201,9 @@ export default async (fastify, options = {}, next) => {
   const routeLoaders = await loadRoutes(
     options.baseDir,
     matches.filter(Boolean),
-    options.injections || {}
+    options.injections || {},
   )
-  await Promise.all(routeLoaders.map(loader => loader(fastify)))
+  const hooks = options.hooks || {}
+  await Promise.all(routeLoaders.map(loader => loader(fastify, hooks)))
   next()
 }
