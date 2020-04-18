@@ -34,20 +34,25 @@ function defaultImport (path) {
 }
 
 function getFastifyFacade (fastify, hooks) {
+  const getHttpMethod = method => (...args) => {
+    const [url, handler] = args
+    fastify.route({
+      method: method.toUpperCase(),
+      url,
+      handler,
+      ...hooks
+    })
+  }
   const getHttpMethods = hooks => ({
-    get: (...args) => {
-      const [url, handler] = args
-      fastify.route({
-        method: 'GET',
-        url,
-        handler,
-        ...hooks
-      })
-    }
+    get: getHttpMethod('get'),
+    post: getHttpMethod('post'),
+    put: getHttpMethod('put'),
+    delete: getHttpMethod('delete')
   })
 
   const getRouteMethod = hooks => ({
     route: (options) => {
+      // eslint-disable-next-line prefer-const
       for (let [hookName, hook] of Object.entries(hooks)) {
         if (options[hookName]) {
           if (!Array.isArray(hook)) {
