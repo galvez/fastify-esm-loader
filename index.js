@@ -33,8 +33,8 @@ function defaultImport (path) {
     .then(m => m.default)
 }
 
-function getFastifyFacade (fastify, hooks) {
-  const getHttpMethod = method => (...args) => {
+function getFastifyFacade (fastify, hookGroups) {
+  const getHttpMethod = (hooks, method) => (...args) => {
     const [url, handler] = args
     fastify.route({
       method: method.toUpperCase(),
@@ -44,10 +44,10 @@ function getFastifyFacade (fastify, hooks) {
     })
   }
   const getHttpMethods = hooks => ({
-    get: getHttpMethod('get'),
-    post: getHttpMethod('post'),
-    put: getHttpMethod('put'),
-    delete: getHttpMethod('delete')
+    get: getHttpMethod(hooks, 'get'),
+    post: getHttpMethod(hooks, 'post'),
+    put: getHttpMethod(hooks, 'put'),
+    delete: getHttpMethod(hooks, 'delete')
   })
 
   const getRouteMethod = hooks => ({
@@ -73,7 +73,7 @@ function getFastifyFacade (fastify, hooks) {
 
   const hookProxies = {}
 
-  for (const [hookGroup, groupHooks] of Object.entries(hooks)) {
+  for (const [hookGroup, groupHooks] of Object.entries(hookGroups)) {
     hookProxies[hookGroup] = new Proxy({
       ...getHttpMethods(groupHooks),
       ...getRouteMethod(groupHooks)
