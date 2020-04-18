@@ -33,6 +33,72 @@ function defaultImport (path) {
     .then(m => m.default)
 }
 
+function getFastifyFacade (fastify, hookGroups) {
+  const getHttpMethod = (hooks, method) => (...args) => {
+    const [url, handler] = args
+    fastify.route({
+      method: method.toUpperCase(),
+      url,
+      handler,
+      ...hooks
+    })
+  }
+  const getHttpMethods = hooks => ({
+    get: getHttpMethod(hooks, 'get'),
+    post: getHttpMethod(hooks, 'post'),
+    put: getHttpMethod(hooks, 'put'),
+    delete: getHttpMethod(hooks, 'delete')
+  })
+
+  const getRouteMethod = hooks => ({
+    route: (options) => {
+      // eslint-disable-next-line prefer-const
+      for (let [hookName, hook] of Object.entries(hooks)) {
+        if (options[hookName]) {
+          if (!Array.isArray(hook)) {
+            hook = [hook]
+          }
+          if (!Array.isArray(options[hookName])) {
+            options[hookName] = [options[hookName], ...hook]
+          } else {
+            options[hookName].push(...hook)
+          }
+        } else {
+          options[hookName] = hook
+        }
+      }
+      fastify.route(options)
+    }
+  })
+
+  const hookProxies = {}
+
+  for (const [hookGroup, groupHooks] of Object.entries(hookGroups)) {
+    hookProxies[hookGroup] = new Proxy({
+      ...getHttpMethods(groupHooks),
+      ...getRouteMethod(groupHooks)
+    }, {
+      get (obj, prop) {
+        if (prop in obj) {
+          return obj[prop]
+        } else {
+          return fastify[prop]
+        }
+      }
+    })
+  }
+
+  return new Proxy(hookProxies, {
+    get (obj, prop) {
+      if (prop in obj) {
+        return obj[prop]
+      } else {
+        return obj.default[prop]
+      }
+    }
+  })
+}
+
 async function loadRoutes (
   baseDir,
   matches,
@@ -84,10 +150,10 @@ async function loadRoutes (
         if (!routeIndex.default || typeof routeIndex.default !== 'function') {
           continue
         }
-        routeLoaders.push((fastify) => {
+        routeLoaders.push((fastify, hooks) => {
           return routeIndex.default({
             ...routeInjections,
-            fastify,
+            fastify: getFastifyFacade(fastify, hooks),
             bind (method, name) {
               if (!method.name) {
                 method.name = name
@@ -133,6 +199,7 @@ export default async (fastify, options = {}, next) => {
     matches.filter(Boolean),
     options.injections || {}
   )
-  await Promise.all(routeLoaders.map(loader => loader(fastify)))
+  const hooks = options.hooks || {}
+  await Promise.all(routeLoaders.map(loader => loader(fastify, hooks)))
   next()
 }
