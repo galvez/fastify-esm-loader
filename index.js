@@ -33,71 +33,62 @@ function defaultImport (path) {
     .then(m => m.default)
 }
 
-function getFastifyFacade (fastify, { hooks }) {
-  const httpMethods = {
+function getFastifyFacade (fastify, hooks) {
+  const getHttpMethods = hooks => ({
     get: (...args) => {
       const [url, handler] = args
       fastify.route({
         method: 'GET',
         url,
         handler,
-        ...hooks,
+        ...hooks
       })
-    },
-    post: (...args) => {
-      const [url, handler] = args
-      fastify.route({
-        method: 'POST',
-        url,
-        handler,
-        ...hooks,
-      })      
-    },
-    put: (...args) => {
-      const [url, handler] = args
-      fastify.route({
-        method: 'PUT',
-        url,
-        handler,
-        ...hooks,
-      })
-    },
-    delete: (...args) => {
-      const [url, handler] = args
-      fastify.route({
-        method: 'DELETE',
-        url,
-        handler,
-        ...hooks,
-      })
-    },
-  }
-  return new Proxy({
-    ...httpMethods,
+    }
+  })
+
+  const getRouteMethod = hooks => ({
     route: (options) => {
-      for (const [hook, list] of Object.entries(hooks)) {
-        if (options[hook]) {
-          if (!Array.isArray(list)) {
-            list = [list]
+      for (let [hookName, hook] of Object.entries(hooks)) {
+        if (options[hookName]) {
+          if (!Array.isArray(hook)) {
+            hook = [hook]
           }
-          if (!Array.isArray(options[hook])) {
-            options[hook] = [options[hook], ...list]
+          if (!Array.isArray(options[hookName])) {
+            options[hookName] = [options[hookName], ...hook]
           } else {
-            options[hook].push(...list)
+            options[hookName].push(...hook)
           }
         } else {
-          options[hook] = list
+          options[hookName] = hook
         }
       }
       fastify.route(options)
-    },
-  },
-  {
-    get (facade, prop) {
-      if (prop in facade) {
-        return facade[prop]
+    }
+  })
+
+  const hookProxies = {}
+
+  for (const [hookGroup, groupHooks] of Object.entries(hooks)) {
+    hookProxies[hookGroup] = new Proxy({
+      ...getHttpMethods(groupHooks),
+      ...getRouteMethod(groupHooks)
+    }, {
+      get (obj, prop) {
+        if (prop in obj) {
+          return obj[prop]
+        } else {
+          return fastify[prop]
+        }
+      }
+    })
+  }
+
+  return new Proxy(hookProxies, {
+    get (obj, prop) {
+      if (prop in obj) {
+        return obj[prop]
       } else {
-        return fastify[prop]
+        return obj.default[prop]
       }
     }
   })
@@ -106,7 +97,7 @@ function getFastifyFacade (fastify, { hooks }) {
 async function loadRoutes (
   baseDir,
   matches,
-  injections = {},
+  injections = {}
 ) {
   const routeLoaders = []
   for (const match of matches) {
@@ -201,7 +192,7 @@ export default async (fastify, options = {}, next) => {
   const routeLoaders = await loadRoutes(
     options.baseDir,
     matches.filter(Boolean),
-    options.injections || {},
+    options.injections || {}
   )
   const hooks = options.hooks || {}
   await Promise.all(routeLoaders.map(loader => loader(fastify, hooks)))
