@@ -93,7 +93,11 @@ function getFastifyFacade (fastify, hookGroups) {
       if (prop in obj) {
         return obj[prop]
       } else {
-        return obj.default[prop]
+        if (obj.default) {
+          return obj.default[prop]
+        } else {
+          return fastify[prop]
+        }
       }
     }
   })
