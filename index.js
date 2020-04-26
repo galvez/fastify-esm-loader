@@ -31,6 +31,7 @@ export function walk (dir, { sliceRoot = true } = {}) {
 function defaultImport (path) {
   return import(path)
     .then(m => m.default)
+    .catch(console.error)
 }
 
 function getFastifyFacade (fastify, hookGroups) {
