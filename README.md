@@ -1,3 +1,7 @@
+This project is no longer maintained.
+
+I recommend using [fastify-autoload](https://github.com/fastify/fastify-autoload) and [fastify-api](https://github.com/galvez/fastify-api) instead.
+
 # fastify-esm-loader
 
 An esm-based loader for your Fastify applications.
